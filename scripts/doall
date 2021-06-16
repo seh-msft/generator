@@ -1,0 +1,102 @@
+#!/usr/bin/env rc
+# Copyright (c) 2021, Microsoft Corporation, Sean Hinchee
+# Licensed under the MIT License.
+
+# usage: doall [generator args]
+# Generate all HTTP requests possible given a specific DB file
+# Assumes `getbearer` returns the attacking user's `Authorization:` token
+# Assumes `mountjson` unmounts and mounts our files through jsonfs for us
+
+# Where the .json specifications are stored
+dir = jsons/
+
+argv0 = $0
+fn usage {
+	echo >[1=2] 'usage:' $argv0 '[-qSR] [-d file.cfg] [-j jsons/] [-m jsonfs/Requests/] [generator args]'
+	exit 1
+}
+
+db = alice.cfg
+auto = no
+mountdir = $HOME/n/json/Requests/
+breathe = yes
+replay = yes
+
+# Commandline flags
+while(~ $1 -*){
+	switch($1){
+		case -S
+			# Don't sleep for delays
+			breathe = no
+
+		case -R
+			# Don't replay requests
+			replay = no
+
+		case -q
+			# Do not prompt to continue
+			# Only valid without -R
+			auto = yes
+
+		case -d
+			# DB (cfg) file to use
+			shift
+			db = $1
+
+		case -j
+			# Directory of .json OpenAPI specifications
+			shift
+			dir = $1
+
+		case -m
+			# jsonfs Requests/ directory root
+			shift
+			mountdir = $1
+
+		case -*
+			usage
+	}
+	shift
+}
+
+# In case of premature termination of a prior iteration
+if(~ $replay yes){
+	killall jsonfs >[2] /dev/null > /dev/null
+}
+
+# For every specification file
+for(file in `{ls $dir}) {
+	file = $dir^'/'^$file
+	echo 'File:' `{basename $file}
+ 	go run . -auth `{getbearer} -db $db -api $file $* > tmp.json
+
+	if(~ $replay yes){
+		jsonfs tmp.json >[2] /dev/null >/dev/null &
+	
+		if(~ $breathe yes){
+			sleep 1
+		}else{
+			# Spin (<1s?) or break if jsonfs is listening
+			for(n in `{seq 100}){
+				if(! ~ `{lsof -i :5640 -sTCP:LISTEN} ()){
+					break
+				}
+				echo 0 > /dev/null
+			}
+		}
+
+	
+		mountjson
+		./replay $mountdir
+
+		if(~ $auto no){
+			echo
+			echo «press enter to continue»
+			read
+		}
+
+		rm tmp.json
+		killall jsonfs >[2] /dev/null > /dev/null
+	}
+}
+

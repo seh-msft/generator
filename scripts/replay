@@ -1,0 +1,35 @@
+#!/usr/bin/env rc
+# Copyright (c) 2021, Microsoft Corporation, Sean Hinchee
+# Licensed under the MIT License.
+
+# usage: replay Requests/
+# Checks for non-401 responses to correlated paths with new authorization
+# Expects a directory of request files (generator)
+
+fn usage {
+	echo 'usage: testnewuser Requests/'
+	exit 1
+}
+
+switch($#*){
+case 1
+	;
+case *
+	usage
+}
+
+dir = $1
+
+for(item in `{ls $dir}){
+	item = $dir/$item
+	top = `{sendhttp.exe < $item | sed 1q | sed 's/[\n\r]//g'}
+	code = `{echo $top | awk '{print $2}'}
+
+	echo $top | awk -v code=$code -v orig=$orig -v item=$item '{
+		trail = " ";
+		printf "%s → %s\t%s", item, $0, trail;
+		printf "\n";
+	}'
+
+}
+

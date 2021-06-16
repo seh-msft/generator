@@ -1,0 +1,4 @@
+github.com/seh-msft/cfg v0.0.0-20210114223223-348cc89c9d0c h1:tRwSP7pwtuY4NmSimGGxYdTLe0vWMOlo3EVfACmSDBk=
+github.com/seh-msft/cfg v0.0.0-20210114223223-348cc89c9d0c/go.mod h1:4uf1hX2caouLdML7tv1O31evW/ngY21d5Luxw/xoxvk=
+github.com/seh-msft/openapi v0.0.0-20210616183003-5b1ff0059ea1 h1:7QlJ9NWT9Qkm6GvRX7V3NOgO0822Vq3ckgoLeQYrCZ8=
+github.com/seh-msft/openapi v0.0.0-20210616183003-5b1ff0059ea1/go.mod h1:g7JNC4mkiOwzcmarccMT2a/s2oazjtSqgjS3JFK/mpw=

@@ -1,0 +1,44 @@
+#!/usr/bin/env rc
+# Copyright (c) 2021, Microsoft Corporation, Sean Hinchee
+# Licensed under the MIT License.
+
+# Finds all missing parameters from stderr output of generator
+
+argv0 = $0
+fn usage {
+	echo >[1=2] 'usage:' $argv0 '[-s] [-d file.cfg] [-j jsons/]'
+	exit 1
+}
+
+dir = jsons/
+db = alice.cfg
+
+sum = no
+
+while(~ $1 -*){
+	switch($1){
+	case -d
+		shift
+		db = $1
+
+	case -j
+		shift
+		dir = $1
+
+	case -s
+		sum = yes
+
+	case -*
+		usage
+	}
+	shift
+}
+
+for(file in `{ls $dir}) {
+	echo
+	go run generator.go -D -auth `{getbearer} -db $db -api $dir/$file $* > /dev/null
+	echo >[2=1] -n '=== ' $file
+} |[2] awk -F 'missed' '{print $2}' | awk -F '[' '{print $2}' | sed 's/\]//g' | sed 's/\:/\n/g' | sed 's/[0-9]/\n/g' | sort | uniq | awk '{print $1}'
+
+
+
